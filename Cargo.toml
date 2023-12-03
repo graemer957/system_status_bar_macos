@@ -14,7 +14,7 @@ categories = ["os::macos-apis"]
 
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = "0.3"
-icrate = { version = "0.0.4", features = ["apple", "Foundation_all", "AppKit_all"] }
+icrate = { version = "0.0.4", features = ["apple", "Foundation", "Foundation_NSDate", "AppKit", "AppKit_NSApplication", "AppKit_NSControl", "AppKit_NSEvent", "AppKit_NSImage", "AppKit_NSMenu", "AppKit_NSMenuItem", "AppKit_NSStatusBar", "AppKit_NSStatusBarButton", "AppKit_NSStatusItem"] }
 objc2 = "0.4"
 
 [dev-dependencies]
