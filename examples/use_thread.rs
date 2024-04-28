@@ -1,27 +1,11 @@
 use std::{
-    time::{
-        Duration,
-    },
-    thread::{
-        self,
-        sleep,
-    },
-    sync::{
-        mpsc::{
-            channel,
-        },
-    },
-    cell::{
-        RefCell,
-    },
+    cell::RefCell,
+    sync::mpsc::channel,
+    thread::{self, sleep},
+    time::Duration,
 };
 
-use system_status_bar_macos::{
-    StatusItem,
-    Menu,
-    MenuItem,
-    sync_event_loop,
-};
+use system_status_bar_macos::{sync_event_loop, Menu, MenuItem, StatusItem};
 
 enum Command {
     Update(usize),
@@ -36,14 +20,20 @@ fn main() {
         match command {
             Command::Update(loop_count) => {
                 status_item.borrow_mut().set_menu(Menu::new(vec![
-                        MenuItem::new(format!("Count: {}", loop_count), None, Some(Menu::new(vec![
-                                MenuItem::new("Sub menu", None, None),
-                        ]))),
-                        MenuItem::new(format!("Count: {}", loop_count), Some(Box::new(|| {
+                    MenuItem::new(
+                        format!("Count: {}", loop_count),
+                        None,
+                        Some(Menu::new(vec![MenuItem::new("Sub menu", None, None)])),
+                    ),
+                    MenuItem::new(
+                        format!("Count: {}", loop_count),
+                        Some(Box::new(|| {
                             println!("Clicked");
-                        })), None),
+                        })),
+                        None,
+                    ),
                 ]));
-            },
+            }
         };
     });
 
@@ -57,5 +47,3 @@ fn main() {
 
     event_loop();
 }
-
-

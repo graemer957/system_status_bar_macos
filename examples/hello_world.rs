@@ -5,6 +5,5 @@ fn main() {
     let _status_item = StatusItem::new("HELLO_WORLD", Menu::new(vec![]));
 
     let (_sender, receiver) = channel::<()>();
-    sync_infinite_event_loop(receiver, |_| { });
+    sync_infinite_event_loop(receiver, |_| {});
 }
-

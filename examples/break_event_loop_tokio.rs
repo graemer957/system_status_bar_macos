@@ -12,4 +12,3 @@ async fn main() {
     terminator.terminate();
     event_loop.await.unwrap();
 }
-

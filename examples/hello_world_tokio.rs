@@ -7,4 +7,3 @@ async fn main() {
 
     spawn(async_infinite_event_loop(time::sleep)).await.unwrap();
 }
-

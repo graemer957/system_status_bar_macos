@@ -1,24 +1,8 @@
-use std::{
-    time::{
-        Duration,
-    },
-    cell::{
-        RefCell,
-    },
-};
+use std::{cell::RefCell, time::Duration};
 
-use system_status_bar_macos::{
-    StatusItem,
-    Menu,
-    MenuItem,
-    async_event_loop,
-};
+use system_status_bar_macos::{async_event_loop, Menu, MenuItem, StatusItem};
 
-use tokio::{
-    time::{
-        sleep,
-    },
-};
+use tokio::time::sleep;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
@@ -29,12 +13,18 @@ async fn main() {
 
     for loop_count in 0..5 {
         status_item.borrow_mut().set_menu(Menu::new(vec![
-                MenuItem::new(format!("Count: {}", loop_count), None, Some(Menu::new(vec![
-                        MenuItem::new("Sub menu", None, None),
-                ]))),
-                MenuItem::new(format!("Count: {}", loop_count), Some(Box::new(|| {
+            MenuItem::new(
+                format!("Count: {}", loop_count),
+                None,
+                Some(Menu::new(vec![MenuItem::new("Sub menu", None, None)])),
+            ),
+            MenuItem::new(
+                format!("Count: {}", loop_count),
+                Some(Box::new(|| {
                     println!("Clicked");
-                })), None),
+                })),
+                None,
+            ),
         ]));
         sleep(Duration::from_secs(1)).await;
     }
@@ -42,4 +32,3 @@ async fn main() {
     terminator.terminate();
     event_loop.await.unwrap();
 }
-

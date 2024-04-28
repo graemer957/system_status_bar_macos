@@ -1,5 +1,5 @@
-use system_status_bar_macos::*;
 use sysinfo::*;
+use system_status_bar_macos::*;
 use tokio::*;
 
 #[tokio::main(flavor = "current_thread")]
@@ -11,8 +11,10 @@ async fn main() {
         let mut sys = System::new_all();
         sys.refresh_all();
 
-        status_item.set_title(format!("CPU Usage: {:3.2}%", sys.global_cpu_info().cpu_usage()));
+        status_item.set_title(format!(
+            "CPU Usage: {:3.2}%",
+            sys.global_cpu_info().cpu_usage()
+        ));
         time::sleep(time::Duration::from_secs(1)).await;
     }
 }
-
