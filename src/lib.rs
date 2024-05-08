@@ -249,7 +249,6 @@ use std::{
     future::Future,
     ptr::NonNull,
     sync::mpsc::{channel, Receiver, Sender, TryRecvError},
-    thread::sleep,
     time::Duration,
 };
 
@@ -270,7 +269,7 @@ use icrate::{
         NSEvent, NSEventMaskAny, NSImage, NSMenu, NSMenuItem, NSStatusBar, NSStatusItem,
         NSVariableStatusItemLength,
     },
-    Foundation::NSString,
+    Foundation::{NSDate, NSString},
 };
 
 use block2::{Block, ConcreteBlock, RcBlock};
@@ -635,7 +634,7 @@ struct AutoReleasePoolContext(*mut c_void);
 unsafe impl Send for AutoReleasePoolContext {}
 
 macro_rules! event_loop {
-    ($terminatee: expr, $sleep: expr, $receiver_callback: expr) => {
+    ($terminatee: expr, $receiver_callback: expr) => {
         unsafe {
             let run_mode = NSString::from_str("kCFRunLoopDefaultMode");
             {
@@ -644,29 +643,25 @@ macro_rules! event_loop {
             }
             'event_loop: loop {
                 let pool_ctx = AutoReleasePoolContext(objc_autoreleasePoolPush());
-                for _ in 0..100 {
-                    {
-                        let app = NSApplication::sharedApplication();
-                        if $terminatee.should_terminate() {
-                            break 'event_loop;
-                        }
-
-                        $receiver_callback;
-
-                        let event: Option<Id<NSEvent>> = app
-                            .nextEventMatchingMask_untilDate_inMode_dequeue(
-                                NSEventMaskAny,
-                                None,
-                                &run_mode,
-                                true,
-                            );
-                        if let Some(event) = event {
-                            app.sendEvent(&event);
-                        };
-                        app.updateWindows();
-                    }
-                    $sleep;
+                let app = NSApplication::sharedApplication();
+                if $terminatee.should_terminate() {
+                    break 'event_loop;
                 }
+
+                $receiver_callback;
+
+                let event: Option<Id<NSEvent>> = app
+                    .nextEventMatchingMask_untilDate_inMode_dequeue(
+                        NSEventMaskAny,
+                        Some(&NSDate::distantFuture()),
+                        &run_mode,
+                        true,
+                    );
+                if let Some(event) = event {
+                    app.sendEvent(&event);
+                };
+                app.updateWindows();
+
                 objc_autoreleasePoolPop(pool_ctx.0);
             }
         };
@@ -681,7 +676,6 @@ pub fn sync_event_loop<T>(
     let f = move || {
         event_loop!(
             terminatee,
-            sleep(Duration::from_millis(10)),
             if let Ok(data) = receiver.try_recv() {
                 callback(data)
             }
@@ -694,7 +688,6 @@ pub fn sync_infinite_event_loop<T>(receiver: Receiver<T>, callback: impl Fn(T)) 
     let terminatee = NopLoopTerminatee {};
     event_loop!(
         terminatee,
-        sleep(Duration::from_millis(10)),
         if let Ok(data) = receiver.try_recv() {
             callback(data)
         }
@@ -702,25 +695,27 @@ pub fn sync_infinite_event_loop<T>(receiver: Receiver<T>, callback: impl Fn(T)) 
 }
 
 pub fn async_event_loop<F>(
-    async_sleep: impl Fn(Duration) -> F,
+    _async_sleep: impl Fn(Duration) -> F,
 ) -> (impl Future<Output = ()>, LoopTerminator)
 where
     F: Future<Output = ()>,
 {
     let (terminator, terminatee) = LoopTerminator::new();
     let future = async move {
-        event_loop!(terminatee, async_sleep(Duration::from_millis(10)).await, ());
+        event_loop!(terminatee, ());
     };
     (future, terminator)
 }
 
-pub fn async_infinite_event_loop<F>(async_sleep: impl Fn(Duration) -> F) -> impl Future<Output = ()>
+pub fn async_infinite_event_loop<F>(
+    _async_sleep: impl Fn(Duration) -> F,
+) -> impl Future<Output = ()>
 where
     F: Future<Output = ()>,
 {
     let terminatee = NopLoopTerminatee {};
     let future = async move {
-        event_loop!(terminatee, async_sleep(Duration::from_millis(10)).await, ());
+        event_loop!(terminatee, ());
     };
     future
 }
